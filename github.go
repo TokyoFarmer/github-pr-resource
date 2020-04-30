@@ -25,6 +25,7 @@ type Github interface {
 	ListOpenPullRequests(prSince time.Time) ([]pullrequest.PullRequest, error)
 	PostComment(int, string) error
 	GetPullRequest(int, string) (pullrequest.PullRequest, error)
+	GetCommitChangedFiles(string) ([]string, error)
 	GetChangedFiles(int) ([]string, error)
 	UpdateCommitStatus(string, string, string, string, string, string) error
 }
@@ -163,6 +164,22 @@ func (m *GithubClient) PostComment(number int, comment string) error {
 	return err
 }
 
+// GetCommitChangedFiles (Gets the changed files associated with a commit (v3 API only, not supported by v4))
+func (m *GithubClient) GetCommitChangedFiles(commitSHA string) ([]string, error) {
+	commitInfo, _, err := m.V3.Repositories.GetCommit(context.TODO(), m.Owner, m.Repository, commitSHA)
+
+	if err != nil {
+		log.Println("could not get commit information.")
+		return nil, err
+	}
+	fileNames := make([]string, 0)
+	for _, file := range commitInfo.Files {
+		fileNames = append(fileNames, *file.Filename)
+	}
+
+	return fileNames, nil
+}
+
 // GetChangedFiles ...
 func (m *GithubClient) GetChangedFiles(number int) ([]string, error) {
 	log.Println("building pull request changed files query")
@@ -246,11 +263,14 @@ func (m *GithubClient) GetPullRequest(number int, commitRef string) (pullrequest
 		return pullrequest.PullRequest{}, err
 	}
 
+	retrievedCommits := make([]pullrequest.Commit, 0)
 	for _, c := range query.Repository.PullRequest.Commits.Edges {
+		retrievedCommits = append(retrievedCommits, commitFactory(c.Node.Commit))
 		if c.Node.Commit.OID == commitRef {
 			// Return as soon as we find the correct ref.
 			pull := PullRequestFactory(query.Repository.PullRequest.PullRequestObject)
 			pull.HeadRef = commitFactory(c.Node.Commit)
+			pull.Commits = retrievedCommits
 			return pull, nil
 		}
 	}
