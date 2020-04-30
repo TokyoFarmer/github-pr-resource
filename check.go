@@ -39,8 +39,10 @@ func Check(request CheckRequest, manager Github) (CheckResponse, error) {
 
 		if len(paths)+len(iPaths) > 0 {
 			log.Println("pattern/s configured")
-			p.Files, err = pullRequestFiles(p.Number, manager)
+			p.Files, err = compareVersionsChangedFiles(p, request, manager)
+
 			if err != nil {
+				log.Println("couldn't get version: ")
 				return nil, err
 			}
 
@@ -113,6 +115,52 @@ func pullRequestFiles(n int, manager Github) ([]string, error) {
 	}
 
 	return files, nil
+}
+
+func commitChangedFiles(sha string, manager Github) ([]string, error) {
+	files, err := manager.GetCommitChangedFiles(sha)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list modified files: %s", err)
+	}
+
+	return files, nil
+}
+
+// If there are new versions and no previous
+// Get all changed files associated with the PR
+// Else get the changed files on a PRs latest commit
+func compareVersionsChangedFiles(pr pullrequest.PullRequest, requestPR CheckRequest, manager Github) ([]string, error) {
+	files := make([]string, 0)
+	var err error
+
+	if (requestPR.Version.PR == 0) || (pr.Number != requestPR.Version.PR) {
+		files, err = pullRequestFiles(pr.Number, manager)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		pr, err := manager.GetPullRequest(pr.Number, pr.HeadRef.OID)
+		if err != nil {
+			log.Println("couldn't get pr...")
+			return nil, err
+		}
+
+		for commitIndex, commit := range pr.Commits {
+			if commit.OID == requestPR.Version.Commit {
+				for i := commitIndex + 1; i < len(pr.Commits); i++ {
+
+					f, err := commitChangedFiles(pr.Commits[i].OID, manager)
+					if err != nil {
+						return nil, err
+					}
+					files = append(files, f...)
+				}
+				break
+			}
+		}
+	}
+
+	return files, err
 }
 
 // CheckRequest ...
