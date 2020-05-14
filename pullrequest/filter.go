@@ -3,6 +3,7 @@ package pullrequest
 import (
 	"log"
 	"regexp"
+	"strings"
 	"time"
 
 	glob "github.com/sabhiram/go-gitignore"
@@ -20,6 +21,17 @@ const (
 
 // Filter is a function that filters a slice of PRs, returning the filtered slice.
 type Filter func(PullRequest) bool
+
+// FromReleaseBranch will check if the PR is from a branch starting with release/*
+func FromReleaseBranch() Filter {
+	return func(p PullRequest) bool {
+		if strings.HasPrefix(p.HeadRefName, "release/") {
+			log.Println("FROM RELEASE BRANCH, SHOULD PRODUCE NEW VERSION...")
+			return true
+		}
+		return false
+	}
+}
 
 // SkipCI returns true if the PR title or HeadRef message contains [skip ci] & the feature is not disabled
 func SkipCI(disabled bool) Filter {
