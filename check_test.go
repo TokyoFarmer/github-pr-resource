@@ -10,22 +10,7 @@ import (
 )
 
 var (
-	testPullRequests = []pullrequest.PullRequest{
-		// earliest
-		createTestPR(1, "master", true, false, false, false, 0, nil),
-		createTestPR(2, "master", false, false, false, false, 0, nil),
-		// new pr
-		createTestPR(3, "master", false, false, true, false, 0, nil),
-		// new pr w/old commitdate
-		createTestPR(4, "master", false, false, true, true, 0, nil),
-		// old pr w/old commitdate
-		createTestPR(5, "master", false, true, false, true, 0, nil),
-		createTestPR(6, "master", false, false, false, false, 0, nil),
-		createTestPR(7, "develop", false, false, false, false, 0, []string{"enhancement"}),
-		createTestPR(8, "master", true, false, false, false, 1, []string{"wontfix"}),
-		createTestPR(9, "master", false, false, false, false, 0, nil),
-		// latest
-	}
+	testPullRequests = []pullrequest.PullRequest{}
 )
 
 func TestCheck(t *testing.T) {
@@ -36,77 +21,7 @@ func TestCheck(t *testing.T) {
 		files        [][]string
 		pullRequests []pullrequest.PullRequest
 		expected     resource.CheckResponse
-	}{
-		{
-			description: "check returns the latest version if there is no previous",
-			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
-				AccessToken: "oauthtoken",
-			},
-			version:      resource.Version{},
-			pullRequests: testPullRequests,
-			files:        [][]string{},
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[8]),
-			},
-		},
-		{
-			description: "check returns the latest version if there is no previous w/basebranch",
-			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
-				AccessToken: "oauthtoken",
-				BaseBranch:  "master",
-			},
-			version:      resource.Version{},
-			pullRequests: testPullRequests,
-			files:        [][]string{},
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[8]),
-			},
-		},
-		{
-			description: "check supports specifying base branch",
-			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
-				AccessToken: "oauthtoken",
-				BaseBranch:  "develop",
-			},
-			version:      resource.Version{},
-			pullRequests: testPullRequests,
-			files:        [][]string{},
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[6]),
-			},
-		},
-
-		{
-			description: "check correctly ignores PRs with no approved reviews when specified",
-			source: resource.Source{
-				Repository:              "itsdalmo/test-repository",
-				AccessToken:             "oauthtoken",
-				RequiredReviewApprovals: 1,
-			},
-			version:      resource.NewVersion(testPullRequests[8]),
-			pullRequests: testPullRequests,
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[8]),
-			},
-		},
-		{
-			description: "check returns latest version from a PR with at least one of the desired labels on it",
-			source: resource.Source{
-				Repository:  "itsdalmo/test-repository",
-				AccessToken: "oauthtoken",
-				Labels:      []string{"enhancement"},
-			},
-			version:      resource.Version{},
-			pullRequests: testPullRequests,
-			files:        [][]string{},
-			expected: resource.CheckResponse{
-				resource.NewVersion(testPullRequests[6]),
-			},
-		},
-	}
+	}{}
 
 	for _, tc := range tests {
 		t.Run(tc.description, func(t *testing.T) {
