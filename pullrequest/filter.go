@@ -23,9 +23,9 @@ const (
 type Filter func(PullRequest) bool
 
 // FromReleaseBranch will check if the PR is from a branch starting with release/*
-func FromReleaseBranch() Filter {
+func FromReleaseBranch(filter string) Filter {
 	return func(p PullRequest) bool {
-		if strings.HasPrefix(p.HeadRefName, "release/") {
+		if strings.HasPrefix(p.HeadRefName, filter) {
 			log.Println("FROM RELEASE BRANCH, SHOULD PRODUCE NEW VERSION...")
 			return true
 		}

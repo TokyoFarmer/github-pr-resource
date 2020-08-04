@@ -31,7 +31,7 @@ func Check(request CheckRequest, manager Github) (CheckResponse, error) {
 	log.Println("total pulls found:", len(pulls))
 
 	for _, p := range pulls {
-		if !pullrequest.FromReleaseBranch()(p) {
+		if !pullrequest.FromReleaseBranch(request.Source.ReleaseFilter)(p) {
 			log.Println("Branch of PR is not a release branch, skipping...")
 			continue
 		}

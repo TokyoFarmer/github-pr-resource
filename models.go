@@ -40,6 +40,8 @@ type Source struct {
 	RequiredReviewApprovals int `json:"required_review_approvals,omitempty"`
 	// Labels returns versions for PRs matching labels
 	Labels []string `json:"labels,omitempty"`
+	// ReleaseFilter returns a string used for filtering branches that has the string as a prefix
+	ReleaseFilter string `json:"release_filter"`
 }
 
 // Validate the source configuration.
@@ -50,6 +52,10 @@ func (s *Source) Validate() error {
 
 	if len(s.V3Endpoint)+len(s.V4Endpoint) > 0 && (s.V3Endpoint == "" || s.V4Endpoint == "") {
 		return errors.New("both v3_endpoint & v4_endpoint endpoints are required for GitHub Enterprise")
+	}
+
+	if s.ReleaseFilter == "" {
+		return errors.New("filter for release branches must be specified")
 	}
 
 	return nil
