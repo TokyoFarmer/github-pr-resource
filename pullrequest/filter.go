@@ -26,7 +26,6 @@ type Filter func(PullRequest) bool
 func FromReleaseBranch(filter string) Filter {
 	return func(p PullRequest) bool {
 		if strings.HasPrefix(p.HeadRefName, filter) {
-			log.Println("FROM RELEASE BRANCH, SHOULD PRODUCE NEW VERSION...")
 			return true
 		}
 		return false
